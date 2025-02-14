@@ -17,19 +17,19 @@ from org.apache.lucene.search import IndexSearcher, BooleanQuery, BooleanClause
 from org.apache.lucene.store import SimpleFSDirectory
 from java.io import File
 
-# Configure logging
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(levelname)s - %(message)s',
-    handlers=[
-        logging.FileHandler('lucene_indexer.log'),
-        logging.StreamHandler()
-    ]
-)
-logger = logging.getLogger(__name__)
+# # Configure logging
+# logging.basicConfig(
+#     level=logging.INFO,
+#     format='%(asctime)s - %(levelname)s - %(message)s',
+#     handlers=[
+#         logging.FileHandler('lucene_indexer.log'),
+#         logging.StreamHandler()
+#     ]
+# )
+# logger = logging.getLogger(__name__)
 
-# Initialize JVM globally
-lucene.initVM(vmargs=['-Djava.awt.headless=true'])
+# # Initialize JVM globally
+# lucene.initVM(vmargs=['-Djava.awt.headless=true'])
 
 @dataclass
 class IndexingStats:
@@ -361,37 +361,37 @@ class LuceneIndexer:
         }
         return sections
 
-if __name__ == "__main__":
-    try:
-        # Initialize indexer with optimized settings
-        indexer = LuceneIndexer(
-            max_workers=4,
-            commit_batch=1000,
-            ram_buffer_size_mb=256
-        )
+# if __name__ == "__main__":
+#     try:
+#         # Initialize indexer with optimized settings
+#         indexer = LuceneIndexer(
+#             max_workers=4,
+#             commit_batch=1000,
+#             ram_buffer_size_mb=256
+#         )
         
-        json_files = [f"marvel_aarav{i}.json" for i in range(1, 17)]
-        json_files.append("marvel_aarav.json")
+#         json_files = [f"marvel_aarav{i}.json" for i in range(1, 17)]
+#         json_files.append("marvel_aarav.json")
         
-        # Validate files before processing
-        valid_files = []
-        for json_file in json_files:
-            if Path(json_file).is_file():
-                valid_files.append(json_file)
-            else:
-                logger.warning(f"File not found: {json_file}")
+#         # Validate files before processing
+#         valid_files = []
+#         for json_file in json_files:
+#             if Path(json_file).is_file():
+#                 valid_files.append(json_file)
+#             else:
+#                 logger.warning(f"File not found: {json_file}")
         
-        if not valid_files:
-            logger.error("No valid JSON files found")
-            exit(1)
+#         if not valid_files:
+#             logger.error("No valid JSON files found")
+#             exit(1)
             
-        # Process files
-        indexer.index_documents(valid_files)
+#         # Process files
+#         indexer.index_documents(valid_files)
         
-        # Example searches
-        indexer.search("Shang Chi")
-        indexer.search("Spider-Man") #, fields=["basic_info.name", "basic_info.aliases"])
+#         # Example searches
+#         indexer.search("Shang Chi")
+#         indexer.search("Spider-Man") #, fields=["basic_info.name", "basic_info.aliases"])
         
-    except Exception as e:
-        logger.error(f"Fatal error: {str(e)}")
-        raise
+#     except Exception as e:
+#         logger.error(f"Fatal error: {str(e)}")
+#         raise
