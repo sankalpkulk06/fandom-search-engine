@@ -8,7 +8,7 @@ from urllib.parse import urlparse, urlunparse, urljoin
 
 
 class WebCrawler:
-    def __init__(self, seed_urls, max_depth=2, time_limit=1800, visited_file="visited_urls.json", output_file="marvel_sankalp3.json"):
+    def __init__(self, seed_urls, max_depth=2, time_limit=3600, visited_file="../visited_urls.json", output_file="marvel_aarav16.json"):
         """
         Initializes the WebCrawler with multiple seed URLs.
         - max_depth: BFS depth limit (default = 2)
@@ -144,11 +144,11 @@ class WebCrawler:
 
 # Initialize with multiple seed URLs
 seed_urls = [
-    "https://marvel.fandom.com/wiki/Howard_the_Duck",
-    "https://marvel.fandom.com/wiki/Jeffrey_(Land_Shark)_(Earth-616)",
-    "https://marvel.fandom.com/wiki/Avengers:_Roll_Call_Vol_1_1"
+"https://marvel.fandom.com/wiki/Dracula_(Earth-26320)", 
+"https://marvel.fandom.com/wiki/Broodlings_of_Chthon",
+"https://marvel.fandom.com/wiki/Category:Earth/Races"
 ]
 
 # Run the crawler
-crawler = WebCrawler(seed_urls, max_depth=2, time_limit=1800)
+crawler = WebCrawler(seed_urls, max_depth=3, time_limit=3600)
 crawler.start_crawl()
