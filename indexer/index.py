@@ -17,19 +17,19 @@ from org.apache.lucene.search import IndexSearcher, BooleanQuery, BooleanClause
 from org.apache.lucene.store import SimpleFSDirectory
 from java.io import File
 
-# # Configure logging
-# logging.basicConfig(
-#     level=logging.INFO,
-#     format='%(asctime)s - %(levelname)s - %(message)s',
-#     handlers=[
-#         logging.FileHandler('lucene_indexer.log'),
-#         logging.StreamHandler()
-#     ]
-# )
-# logger = logging.getLogger(__name__)
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(levelname)s - %(message)s',
+    handlers=[
+        logging.FileHandler('lucene_indexer.log'),
+        logging.StreamHandler()
+    ]
+)
+logger = logging.getLogger(__name__)
 
-# # Initialize JVM globally
-# lucene.initVM(vmargs=['-Djava.awt.headless=true'])
+# Initialize JVM globally
+lucene.initVM(vmargs=['-Djava.awt.headless=true'])
 
 @dataclass
 class IndexingStats:
