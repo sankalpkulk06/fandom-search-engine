@@ -8,7 +8,7 @@ from urllib.parse import urlparse, urlunparse, urljoin
 
 
 class WebCrawler:
-    def __init__(self, seed_urls, max_depth=2, time_limit=1800, visited_file="../visited_urls.json", output_file="marvel_sankalp3.json"):
+    def __init__(self, seed_urls, max_depth=2, time_limit=1800, visited_file="../visited_urls.json", output_file="data/marvel.json"):
         """
         Initializes the WebCrawler with multiple seed URLs.
         - max_depth: BFS depth limit (default = 2)

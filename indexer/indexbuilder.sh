@@ -1,8 +1,8 @@
 #!/bin/bash
 
 # Default values
-# MAX_WORKERS=4
-# SEARCH_QUERY="Spider-Man"
+MAX_WORKERS=4
+SEARCH_QUERY="Spider-Man"
 
 # Parse command-line arguments
 while [[ "$#" -gt 0 ]]; do
