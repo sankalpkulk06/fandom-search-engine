@@ -29,8 +29,12 @@ if __name__ == "__main__":
             ram_buffer_size_mb=256
         )
 
-        json_files = [f"marvel_aarav{i}.json" for i in range(1, 17)]
-        json_files.append("marvel_aarav.json")
+        json_files = [f"../scraper/data/marvel_aarav{i}.json" for i in range(1, 17)] + \
+            [f"../scraper/data/marvel_aryan{i}.json" for i in range(1, 9)] + \
+            [f"../scraper/data/marvel_sankalp{i}.json" for i in range(1, 10)] + \
+            [f"../scraper/data/marvel_sourav{i}.json" for i in range(1, 9)] + \
+            [f"../scraper/data/marvel_will{i}.json" for i in range(1, 9)] 
+        # json_files.append("marvel_aarav.json")
 
         # Validate files before processing
         valid_files = [json_file for json_file in json_files if Path(json_file).is_file()]
