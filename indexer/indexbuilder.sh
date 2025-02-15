@@ -1,8 +1,8 @@
 #!/bin/bash
 
 # Default values
-MAX_WORKERS=4
-SEARCH_QUERY="Spider-Man"
+# MAX_WORKERS=4
+# SEARCH_QUERY="Spider-Man"
 
 # Parse command-line arguments
 while [[ "$#" -gt 0 ]]; do
@@ -15,4 +15,4 @@ while [[ "$#" -gt 0 ]]; do
 done
 
 # Run the Python script with the parsed arguments
-python3 indexbuilder.py --max_workers "$MAX_WORKERS" --search_query "$SEARCH_QUERY"
+python3 indexbuilder.py --max_workers "$MAX_WORKERS" --search_query "$SEARCH_QUERY" > output.txt
