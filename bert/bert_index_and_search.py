@@ -5,9 +5,10 @@ import faiss
 import torch
 from transformers import BertTokenizer, BertModel
 import argparse
+from tqdm import tqdm  
 
 class BERTIndexer:
-    def __init__(self, input_file, index_file='bert_fandom_index.faiss', mapping_file='doc_id_mapping.json'):
+    def __init__(self, input_file, index_file='bert_fandom_index.faiss', mapping_file='doc_id_mapping.json', batch_size=16):
         self.input_file = input_file
         self.index_file = index_file
         self.mapping_file = mapping_file
@@ -16,6 +17,7 @@ class BERTIndexer:
         self.passages = []
         self.index = None
         self.doc_ids = []
+        self.batch_size = batch_size  
 
     def load_data(self):
         """ Load the input data from the JSON file. """
@@ -42,10 +44,18 @@ class BERTIndexer:
         embeddings = []
         self.doc_ids = []
 
-        for doc_id, passage in self.passages:
-            embedding = self.get_bert_embedding(passage)
-            embeddings.append(embedding)
-            self.doc_ids.append(doc_id)
+        # Process data in batches for faster indexing
+        for i in tqdm(range(0, len(self.passages), self.batch_size), desc="Indexing Passages"):
+            batch = self.passages[i:i + self.batch_size]
+            batch_embeddings = []
+
+            for doc_id, passage in batch:
+                embedding = self.get_bert_embedding(passage)
+                batch_embeddings.append(embedding)
+                self.doc_ids.append(doc_id)
+
+            batch_embeddings = np.array(batch_embeddings).astype('float32')
+            embeddings.extend(batch_embeddings)
 
         embeddings = np.array(embeddings).astype('float32')
         self.index.add(embeddings)
@@ -107,7 +117,8 @@ def main(args):
     # Create BERTIndexer instance
     indexer = BERTIndexer(input_file=args.input_file, 
                           index_file=args.index_file, 
-                          mapping_file=args.mapping_file)
+                          mapping_file=args.mapping_file, 
+                          batch_size=args.batch_size)
 
     # Perform indexing and search
     indexer.index_and_search()
@@ -118,6 +129,7 @@ if __name__ == "__main__":
     parser.add_argument('--input_file', type=str, default='marvel_aarav1.json', help='Path to the input JSON file')
     parser.add_argument('--index_file', type=str, default='bert_fandom_index.faiss', help='Path to save FAISS index')
     parser.add_argument('--mapping_file', type=str, default='doc_id_mapping.json', help='Path to save document ID mapping')
+    parser.add_argument('--batch_size', type=int, default=16, help='Batch size for indexing')
 
     args = parser.parse_args()
     main(args)
