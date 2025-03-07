@@ -6,12 +6,13 @@ import torch
 from transformers import BertTokenizer, BertModel
 import argparse
 import re
+import os
 from sentence_transformers import SentenceTransformer
 
 class BERTIndexer:
-    def __init__(self, input_file, index_file='bert_fandom_index.faiss', mapping_file='doc_id_mapping.json'):
-        """Initialize with file paths and load SentenceTransformer model."""
-        self.input_file = input_file
+    def __init__(self, input_dir, index_file='bert_fandom_index.faiss', mapping_file='doc_id_mapping.json'):
+        """Initialize with directory path and load SentenceTransformer model."""
+        self.input_dir = input_dir
         self.index_file = index_file
         self.mapping_file = mapping_file
         self.tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
@@ -50,23 +51,33 @@ class BERTIndexer:
         return text.strip()
 
     def load_data(self):
-        """Load JSON data, clean passages, compute quality, and filter low-quality ones."""
-        print(f"Loading data from {self.input_file}")
-        with open(self.input_file, 'r', encoding='utf-8') as f:
-            data = json.load(f)
+        """Load data from the first 4 JSON files in the directory, clean passages, compute quality, and filter low-quality ones."""
+        print(f"Loading data from {self.input_dir}")
 
-        for doc_id, doc in data.items():
-            content = self.clean_content(doc['content'])
-            
-            # Exclude content with less than 50 words
-            if len(content.split()) < 50:
-                continue
+        files_processed = 0
+        for filename in os.listdir(self.input_dir):
+            if files_processed >= 4:  # Stop after processing 4 files
+                break
 
-            quality_score = self.compute_quality_score(content)
-            
-            if quality_score > 0.5:  # Reduced quality score threshold
-                self.passages.append((doc_id, content, quality_score))
-                self.quality_scores[doc_id] = quality_score
+            file_path = os.path.join(self.input_dir, filename)
+            if file_path.endswith('.json'):
+                with open(file_path, 'r', encoding='utf-8') as f:
+                    data = json.load(f)
+
+                for doc_id, doc in data.items():
+                    content = self.clean_content(doc['content'])
+
+                    # Exclude content with less than 50 words
+                    if len(content.split()) < 50:
+                        continue
+
+                    quality_score = self.compute_quality_score(content)
+
+                    if quality_score > 0.5:  # Reduced quality score threshold
+                        self.passages.append((doc_id, content, quality_score))
+                        self.quality_scores[doc_id] = quality_score
+
+                files_processed += 1
 
         print(f"Loaded {len(self.passages)} quality passages (filtered).")
 
@@ -197,7 +208,7 @@ class BERTIndexer:
 
 def main(args):
     """Entry point to initialize BERTIndexer and run indexing + search."""
-    indexer = BERTIndexer(input_file=args.input_file, 
+    indexer = BERTIndexer(input_dir=args.input_dir, 
                           index_file=args.index_file, 
                           mapping_file=args.mapping_file)
 
@@ -206,7 +217,7 @@ def main(args):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument('--input_file', type=str, required=True, help='Path to input JSON file')
+    parser.add_argument('--input_dir', type=str, required=True, help='Path to directory containing JSON files')
     parser.add_argument('--index_file', type=str, default='bert_fandom_index.faiss', help='Path to save FAISS index')
     parser.add_argument('--mapping_file', type=str, default='doc_id_mapping.json', help='Path to save document ID mapping')
 
