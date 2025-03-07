@@ -6,32 +6,33 @@ import torch
 from transformers import BertTokenizer, BertModel
 import argparse
 import re
-import nltk
-from nltk.corpus import stopwords
-
-# Download stopwords from NLTK (run this once)
-nltk.download('stopwords')
+from sentence_transformers import SentenceTransformer
 
 class BERTIndexer:
     def __init__(self, input_file, index_file='bert_fandom_index.faiss', mapping_file='doc_id_mapping.json'):
-        """Initialize with file paths and load BERT tokenizer & model."""
+        """Initialize with file paths and load SentenceTransformer model."""
         self.input_file = input_file
         self.index_file = index_file
         self.mapping_file = mapping_file
         self.tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
-        self.model = BertModel.from_pretrained('bert-base-uncased')
+        self.model = SentenceTransformer('paraphrase-distilroberta-base-v1')  # Fine-tuned model for semantic search
         self.passages = []
         self.index = None
         self.doc_ids = []
         self.quality_scores = {}
-        self.stop_words = set(stopwords.words('english'))  # Set of stopwords
+        self.synonyms = {
+            'avengers': ['marvel superheroes', 'marvel heroes', 'superheroes', 'avenger team'],
+            'iron man': ['tony stark', 'ironman', 'stark industries'],
+            'batman': ['dark knight', 'bruce wayne', 'gotham'],
+            'superman': ['clark kent', 'man of steel', 'kryptonian'],
+            'wonder woman': ['diana prince', 'amazonian', 'themyscira']
+        }
 
     def clean_content(self, text):
         """
         Preprocess content to:
         - Fix missing spaces between sections (e.g., GalleryName -> Gallery Name)
         - Remove newlines, tabs, and excessive spaces
-        - Remove stopwords
         """
         # Insert space between lowercase+Uppercase
         text = re.sub(r'(?<=[a-z])([A-Z][a-z])', r' \1', text)
@@ -45,19 +46,8 @@ class BERTIndexer:
         # Collapse multiple spaces into a single space
         text = re.sub(r'\s+', ' ', text)
 
-        # Remove special characters (retain only basic punctuation)
-        text = re.sub(r'[^a-zA-Z0-9\s.,!?\'"()-]', '', text)
-
-        # Remove excessive punctuation like multiple "!!!" or "..."
-        text = re.sub(r'([!?.])\1+', r'\1', text)
-
-        # Remove stopwords
-        words = text.split()
-        filtered_words = [word for word in words if word.lower() not in self.stop_words]
-        cleaned_text = ' '.join(filtered_words)
-
         # Trim leading/trailing spaces
-        return cleaned_text.strip()
+        return text.strip()
 
     def load_data(self):
         """Load JSON data, clean passages, compute quality, and filter low-quality ones."""
@@ -67,8 +57,14 @@ class BERTIndexer:
 
         for doc_id, doc in data.items():
             content = self.clean_content(doc['content'])
+            
+            # Exclude content with less than 50 words
+            if len(content.split()) < 50:
+                continue
+
             quality_score = self.compute_quality_score(content)
-            if quality_score > 0:  # Filter out low-quality passages
+            
+            if quality_score > 0.5:  # Reduced quality score threshold
                 self.passages.append((doc_id, content, quality_score))
                 self.quality_scores[doc_id] = quality_score
 
@@ -87,11 +83,8 @@ class BERTIndexer:
 
     def get_bert_embedding(self, text):
         """Generate a BERT embedding (768-dim) for a given text."""
-        tokens = self.tokenizer(text, max_length=512, truncation=True, padding='max_length', return_tensors='pt')
-        with torch.no_grad():
-            output = self.model(**tokens)
-            cls_embedding = output.last_hidden_state[:, 0, :]  # CLS token embedding
-        return cls_embedding.squeeze().numpy()
+        embedding = self.model.encode(text)
+        return embedding
 
     def create_faiss_index(self):
         """Build FAISS index from all passage embeddings."""
@@ -138,9 +131,20 @@ class BERTIndexer:
         else:
             return "Long"
 
+    def expand_query(self, query):
+        """Expand query using synonyms for Marvel and DC characters."""
+        query_tokens = query.lower().split()
+        expanded_query = []
+        for token in query_tokens:
+            expanded_query.append(token)
+            if token in self.synonyms:
+                expanded_query.extend(self.synonyms[token])
+        return " ".join(expanded_query)
+
     def search(self, query, top_k=5, filter_quality=True):
         """Search FAISS index and rank results (optionally using quality scores)."""
-        query_embedding = self.get_bert_embedding(query).reshape(1, -1).astype('float32')
+        expanded_query = self.expand_query(query)
+        query_embedding = self.get_bert_embedding(expanded_query).reshape(1, -1).astype('float32')
         distances, indices = self.index.search(query_embedding, top_k * 3)
 
         query_category = self.categorize_query_length(query)
@@ -150,7 +154,7 @@ class BERTIndexer:
         for idx, dist in zip(indices[0], distances[0]):
             doc_id = self.doc_ids[idx]
             passage_text, quality_score = self.get_passage_and_score(doc_id)
-            results.append((doc_id, passage_text[:500], dist, quality_score))
+            results.append((doc_id, passage_text[:1000], dist, quality_score))  # Show more context
 
         if filter_quality:
             results = sorted(results, key=lambda x: (-x[3], x[2]))  # Quality desc, Distance asc
@@ -185,7 +189,7 @@ class BERTIndexer:
 
             filter_quality = input("Filter by quality? (y/n): ").strip().lower() == 'y'
 
-            results = self.search(query, top_k=5, filter_quality=filter_quality)
+            results = self.search(query, top_k=10, filter_quality=filter_quality)
             print("\nTop results:")
             for doc_id, snippet, dist, quality in results:
                 print(f"Doc: {doc_id}\nSnippet: {snippet}\nDistance: {dist:.4f} | Quality Score: {quality:.2f}\n")
