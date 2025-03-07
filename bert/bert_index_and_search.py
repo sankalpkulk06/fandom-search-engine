@@ -51,14 +51,10 @@ class BERTIndexer:
         return text.strip()
 
     def load_data(self):
-        """Load data from the first 4 JSON files in the directory, clean passages, compute quality, and filter low-quality ones."""
+        """Load data from all JSON files in the directory, clean passages, compute quality, and filter low-quality ones."""
         print(f"Loading data from {self.input_dir}")
-
-        files_processed = 0
+        
         for filename in os.listdir(self.input_dir):
-            if files_processed >= 4:  # Stop after processing 4 files
-                break
-
             file_path = os.path.join(self.input_dir, filename)
             if file_path.endswith('.json'):
                 with open(file_path, 'r', encoding='utf-8') as f:
@@ -76,8 +72,6 @@ class BERTIndexer:
                     if quality_score > 0.5:  # Reduced quality score threshold
                         self.passages.append((doc_id, content, quality_score))
                         self.quality_scores[doc_id] = quality_score
-
-                files_processed += 1
 
         print(f"Loaded {len(self.passages)} quality passages (filtered).")
 
