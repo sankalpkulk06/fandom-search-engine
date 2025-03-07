@@ -187,7 +187,7 @@ def main(args):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument('--input_file', type=str, required=True, help='Path to input JSON file')
+    parser.add_argument('--input_file', type=str, required=True, default="../scraper/data/marvel_aarav1.json", help='Path to input JSON file')
     parser.add_argument('--index_file', type=str, default='bert_fandom_index.faiss', help='Path to save FAISS index')
     parser.add_argument('--mapping_file', type=str, default='doc_id_mapping.json', help='Path to save document ID mapping')
 
