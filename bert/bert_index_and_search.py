@@ -21,6 +21,7 @@ class BERTIndexer:
         self.index = None
         self.doc_ids = []
         self.quality_scores = {}
+        self.urls = []
         self.synonyms = {
             'avengers': ['marvel superheroes', 'marvel heroes', 'superheroes', 'avenger team'],
             'iron man': ['tony stark', 'ironman', 'stark industries'],
@@ -72,6 +73,7 @@ class BERTIndexer:
                     if quality_score > 0.5:  # Reduced quality score threshold
                         self.passages.append((doc_id, content, quality_score))
                         self.quality_scores[doc_id] = quality_score
+                        self.urls.append(doc['url'])  # Storing the URL as well
 
         print(f"Loaded {len(self.passages)} quality passages (filtered).")
 
@@ -119,64 +121,15 @@ class BERTIndexer:
         with open(self.mapping_file, 'w') as f:
             json.dump({
                 'doc_ids': self.doc_ids,
-                'quality_scores': self.quality_scores
+                'quality_scores': self.quality_scores,
+                'urls': self.urls  # Storing the URLs
             }, f)
 
         print(f"Saved FAISS index to {self.index_file}")
-        print(f"Saved document ID mapping and quality scores to {self.mapping_file}")
+        print(f"Saved document ID mapping, quality scores, and URLs to {self.mapping_file}")
 
-    def categorize_query_length(self, query):
-        """Categorize query length into Short, Medium, or Long."""
-        tokens = query.split()
-        length = len(tokens)
-        if length <= 2:
-            return "Short"
-        elif length <= 5:
-            return "Medium"
-        else:
-            return "Long"
-
-    def expand_query(self, query):
-        """Expand query using synonyms for Marvel and DC characters."""
-        query_tokens = query.lower().split()
-        expanded_query = []
-        for token in query_tokens:
-            expanded_query.append(token)
-            if token in self.synonyms:
-                expanded_query.extend(self.synonyms[token])
-        return " ".join(expanded_query)
-
-    def search(self, query, top_k=5, filter_quality=True):
-        """Search FAISS index and rank results (optionally using quality scores)."""
-        expanded_query = self.expand_query(query)
-        query_embedding = self.get_bert_embedding(expanded_query).reshape(1, -1).astype('float32')
-        distances, indices = self.index.search(query_embedding, top_k * 3)
-
-        query_category = self.categorize_query_length(query)
-        print(f"\n[Query Length: {len(query.split())} tokens] [Category: {query_category}]")
-
-        results = []
-        for idx, dist in zip(indices[0], distances[0]):
-            doc_id = self.doc_ids[idx]
-            passage_text, quality_score = self.get_passage_and_score(doc_id)
-            results.append((doc_id, passage_text[:1000], dist, quality_score))  # Show more context
-
-        if filter_quality:
-            results = sorted(results, key=lambda x: (-x[3], x[2]))  # Quality desc, Distance asc
-        else:
-            results = sorted(results, key=lambda x: x[2])  # Only Distance asc
-
-        return results[:top_k]
-
-    def get_passage_and_score(self, doc_id):
-        """Retrieve passage text and quality score by doc_id."""
-        for d_id, passage, quality in self.passages:
-            if d_id == doc_id:
-                return passage, self.quality_scores[doc_id]
-        return "", 0
-
-    def index_and_search(self):
-        """Full pipeline: load, clean, index, save, then enable interactive search."""
+    def index_and_save(self):
+        """Full pipeline: load, clean, index, save."""
         self.load_data()
 
         print("Starting BERT indexing...")
@@ -186,27 +139,14 @@ class BERTIndexer:
 
         self.save_index_and_mapping()
 
-        print("\nYou can now search your data!")
-        while True:
-            query = input("\nEnter your search query (or type 'exit' to quit): ").strip()
-            if query.lower() == 'exit':
-                break
-
-            filter_quality = input("Filter by quality? (y/n): ").strip().lower() == 'y'
-
-            results = self.search(query, top_k=10, filter_quality=filter_quality)
-            print("\nTop results:")
-            for doc_id, snippet, dist, quality, url in results:
-                print(f"Doc: {doc_id}\nURL: {url}\nSnippet: {snippet}\nDistance: {dist:.4f} | Quality Score: {quality:.2f}\n")
-
 
 def main(args):
-    """Entry point to initialize BERTIndexer and run indexing + search."""
+    """Entry point to initialize BERTIndexer and run indexing."""
     indexer = BERTIndexer(input_dir=args.input_dir, 
                           index_file=args.index_file, 
                           mapping_file=args.mapping_file)
 
-    indexer.index_and_search()
+    indexer.index_and_save()
 
 
 if __name__ == "__main__":
