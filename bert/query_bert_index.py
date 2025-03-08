@@ -61,13 +61,24 @@ class BERTQueryEngine:
         print(f"\n[Query Length: {len(query.split())} tokens] [Category: {query_category}]")
 
         results = []
+        seen_docs = set()
+
         for idx, dist in zip(indices[0], distances[0]):
             if idx >= len(self.doc_mapping['doc_ids']):
                 continue  # Skip invalid indices
 
             doc_id = self.doc_mapping['doc_ids'][idx]
+
+            if doc_id in seen_docs:
+                continue  # Skip duplicates
+            seen_docs.add(doc_id)
+
             passage_text, quality_score, url = self.get_passage_details(doc_id)
-            results.append((doc_id, passage_text[:1000], dist, quality_score, url))  # Show snippet
+
+            if passage_text is None:
+                continue  # Skip if we can't find content
+
+            results.append((doc_id, passage_text[:500], dist, quality_score, url))  # Show first 500 chars of text
 
         if filter_quality:
             results = sorted(results, key=lambda x: (-x[3], x[2]))  # Sort by Quality desc, Distance asc
@@ -78,11 +89,15 @@ class BERTQueryEngine:
 
     def get_passage_details(self, doc_id):
         """Retrieve passage text, quality score, and URL by document ID."""
-        idx = self.doc_mapping['doc_ids'].index(doc_id)
-        quality_score = self.doc_mapping['quality_scores'].get(doc_id, 0)
-        url = self.doc_mapping.get('urls', {}).get(doc_id, 'No URL Available')
+        if doc_id not in self.doc_mapping['docs']:
+            return None, 0, "No URL Available"
 
-        return f"Document ID: {doc_id}", quality_score, url
+        doc_info = self.doc_mapping['docs'][doc_id]
+        passage_text = doc_info.get('content', 'No content available')
+        quality_score = doc_info.get('quality_score', 0)
+        url = doc_info.get('url', 'No URL Available')
+
+        return passage_text, quality_score, url
 
 def main():
     parser = argparse.ArgumentParser()
