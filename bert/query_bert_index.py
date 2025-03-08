@@ -42,18 +42,30 @@ class BERTQueryEngine:
             cls_embedding = output.last_hidden_state[:, 0, :]  # CLS token
         return cls_embedding.squeeze().numpy().astype('float32')
 
-    def search(self, query, top_k=5):
-        """Search the FAISS index for the query and return top-k results."""
-        query_embedding = self.get_bert_embedding(query).reshape(1, -1)
-        distances, indices = self.index.search(query_embedding, top_k)
+    def search(self, query, top_k=5, filter_quality=True):
+        """Search FAISS index and rank results (optionally using quality scores)."""
+        expanded_query = self.expand_query(query)
+        query_embedding = self.get_bert_embedding(expanded_query).reshape(1, -1).astype('float32')
+        distances, indices = self.index.search(query_embedding, top_k * 3)
+
+        query_category = self.categorize_query_length(query)
+        print(f"\n[Query Length: {len(query.split())} tokens] [Category: {query_category}]")
 
         results = []
         for idx, dist in zip(indices[0], distances[0]):
             doc_id = self.doc_ids[idx]
-            snippet = self.passages.get(doc_id, "")[:500]
-            results.append((doc_id, snippet, dist))
+            passage_text, quality_score = self.get_passage_and_score(doc_id)
+            url = self.doc_urls.get(doc_id, "URL not available")  # Load URL from mapping
 
-        return results
+            results.append((doc_id, passage_text[:1000], dist, quality_score, url))  # Add URL
+
+        if filter_quality:
+            results = sorted(results, key=lambda x: (-x[3], x[2]))  # Quality desc, Distance asc
+        else:
+            results = sorted(results, key=lambda x: x[2])  # Only Distance asc
+
+        return results[:top_k]
+
 
 
 if __name__ == '__main__':

@@ -196,8 +196,8 @@ class BERTIndexer:
 
             results = self.search(query, top_k=10, filter_quality=filter_quality)
             print("\nTop results:")
-            for doc_id, snippet, dist, quality in results:
-                print(f"Doc: {doc_id}\nSnippet: {snippet}\nDistance: {dist:.4f} | Quality Score: {quality:.2f}\n")
+            for doc_id, snippet, dist, quality, url in results:
+                print(f"Doc: {doc_id}\nURL: {url}\nSnippet: {snippet}\nDistance: {dist:.4f} | Quality Score: {quality:.2f}\n")
 
 
 def main(args):
