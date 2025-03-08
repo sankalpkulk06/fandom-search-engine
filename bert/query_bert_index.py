@@ -19,6 +19,25 @@ class BERTQueryEngine:
 
         self.passages = self._load_passages()
 
+    def expand_query(self, query):
+        """Expand query using synonyms for Marvel and DC characters."""
+        synonyms = {
+            'avengers': ['marvel superheroes', 'marvel heroes', 'superheroes', 'avenger team'],
+            'iron man': ['tony stark', 'ironman', 'stark industries'],
+            'batman': ['dark knight', 'bruce wayne', 'gotham'],
+            'superman': ['clark kent', 'man of steel', 'kryptonian'],
+            'wonder woman': ['diana prince', 'amazonian', 'themyscira']
+        }
+
+        query_tokens = query.lower().split()
+        expanded_query = []
+        for token in query_tokens:
+            expanded_query.append(token)
+            if token in synonyms:
+                expanded_query.extend(synonyms[token])
+
+        return " ".join(expanded_query)
+
     def _load_passages(self):
         """
         Optional: Load full passage data if you want to show snippets with results.
