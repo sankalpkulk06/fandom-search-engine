@@ -63,23 +63,31 @@ class BERTSearcher:
             print(f"   Snippet: {snippet}")
             print("-")
 
-    def extract_snippet(self, query, passage_text, window=25):
-        """Extracts a snippet around the most relevant query term in the passage."""
+    def extract_snippet(self, query, passage_text, window=30):
+        """Returns the first 30 words of the passage as a snippet."""
         if not passage_text:
             return "Snippet not available."
-
+        
         words = passage_text.split()
-        query_words = query.lower().split()
-        
-        # Find the first occurrence of any query word
-        for i, word in enumerate(words):
-            if any(qw in word.lower() for qw in query_words):
-                start = max(0, i - window // 2)
-                end = min(len(words), i + window // 2)
-                return "... " + " ".join(words[start:end]) + " ..."
-        
-        # Fallback: return first 'window' words
         return "... " + " ".join(words[:window]) + " ..."
+
+    # def extract_snippet(self, query, passage_text, window=25):
+    #     """Extracts a snippet around the most relevant query term in the passage."""
+    #     if not passage_text:
+    #         return "Snippet not available."
+
+    #     words = passage_text.split()
+    #     query_words = query.lower().split()
+        
+    #     # Find the first occurrence of any query word
+    #     for i, word in enumerate(words):
+    #         if any(qw in word.lower() for qw in query_words):
+    #             start = max(0, i - window // 2)
+    #             end = min(len(words), i + window // 2)
+    #             return "... " + " ".join(words[start:end]) + " ..."
+        
+    #     # Fallback: return first 'window' words
+    #     return "... " + " ".join(words[:window]) + " ..."
 
 
 def main():
