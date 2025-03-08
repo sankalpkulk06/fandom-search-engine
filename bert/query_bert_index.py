@@ -89,15 +89,16 @@ class BERTQueryEngine:
 
     def get_passage_details(self, doc_id):
         """Retrieve passage text, quality score, and URL by document ID."""
-        if doc_id not in self.doc_mapping['docs']:
+        if doc_id not in self.doc_mapping:
             return None, 0, "No URL Available"
 
-        doc_info = self.doc_mapping['docs'][doc_id]
+        doc_info = self.doc_mapping[doc_id]  # Directly access by doc_id
         passage_text = doc_info.get('content', 'No content available')
-        quality_score = doc_info.get('quality_score', 0)
+        quality_score = doc_info.get('quality_score', 0)  # If quality score is missing, default to 0
         url = doc_info.get('url', 'No URL Available')
 
         return passage_text, quality_score, url
+
 
 def main():
     parser = argparse.ArgumentParser()
