@@ -1,4 +1,6 @@
 import streamlit as st
+import os
+from bert.bert_index_and_search import BERTIndexer
 
 def main():
     st.set_page_config(page_title="Superhero Search", page_icon="🦸", layout="centered")
@@ -26,36 +28,31 @@ def main():
     # Subtitle
     st.subheader("🔍 Find details about your favorite Marvel and DC superheroes! 💥")
     
-    # Display Image
-    # st.image("https://upload.wikimedia.org/wikipedia/en/3/35/Superhero_collage.png", use_column_width=True)
+    # Paths to the BERT index and doc mapping files
+    index_file = os.path.join("..", "bert", "marvel_dc_bert_index.faiss")
+    mapping_file = os.path.join("..", "bert", "marvel_dc_doc_mapping.json")
+    data_dir = os.path.join("..", "scraper", "data")
+    
+    # BERTIndexer object
+    indexer = BERTIndexer(index_file=index_file, mapping_file=mapping_file, data_dir=data_dir)
     
     # Centered Search Bar
     search_query = st.text_input("", "", placeholder="Search any of your favourite Marvel or DC characters...")
-    
+
     # Search Button
     search_button = st.button("Search")
     
-    # Sample search results class
-    class SearchResult:
-        def __init__(self, name, url, description):
-            self.name = name
-            self.url = url
-            self.description = description
-    
-    sample_results = [
-        SearchResult("Spider-Man", "https://www.marvel.com/characters/spider-man-peter-parker", "A young hero with spider-like abilities and a strong sense of responsibility."),
-        SearchResult("Batman", "https://www.dc.com/characters/batman", "A billionaire vigilante who fights crime using his intellect, gadgets, and martial arts."),
-        SearchResult("Iron Man", "https://www.marvel.com/characters/iron-man-tony-stark", "Genius billionaire Tony Stark fights evil in his high-tech armored suit."),
-        SearchResult("Wonder Woman", "https://www.dc.com/characters/wonder-woman", "An Amazonian warrior princess with superhuman strength and combat skills."),
-    ]
-    
-    # Display search results if search is performed
     if search_button and search_query:
         st.write(f"Searching for: **{search_query}**...")
-        st.write("### Sample Search Results:")
-        for result in sample_results:
-            st.markdown(f"**[{result.name}]({result.url})**")
-            st.write(result.description)
+
+        # Perform query on the index
+        results = indexer.query_index(search_query, top_k=5)
+
+        st.write("### Search Results:")
+        for rank, result in enumerate(results, 1):
+            st.markdown(f"**[{result['doc_id']}]({result['url']})**")
+            st.write(f"**Distance**: {result['distance']:.4f}, **Quality Score**: {result['quality_score']:.2f}")
+            st.write(f"**Snippet**: ... {result['snippet']} ...")
             st.write("---")
 
 if __name__ == "__main__":
