@@ -52,6 +52,13 @@ class BERTQueryEngine:
 
     def search(self, query, top_k=5, filter_quality=True):
         """Search the FAISS index for the top K relevant results."""
+        print(f"Searching for query: {query}")
+    
+        query_embedding = self.embed_query(query)
+        print(f"Query embedding: {query_embedding}")  # Print query embedding for debugging
+
+        results = self.index.search(query_embedding, top_k)
+        print(f"Search results: {results}")
         expanded_query = self.expand_query(query)
         query_embedding = self.get_bert_embedding(expanded_query).reshape(1, -1)
 
