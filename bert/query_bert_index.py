@@ -4,6 +4,7 @@ import numpy as np
 from sentence_transformers import SentenceTransformer
 import argparse
 import os
+import streamlit as st
 
 class BERTIndexer:
     def __init__(self, index_file='bert_fandom_index.faiss', mapping_file='doc_id_mapping.json', data_dir='../scraper/data'):
@@ -20,6 +21,7 @@ class BERTIndexer:
             self.doc_ids = mapping['doc_ids']
             self.quality_scores = mapping['quality_scores']
             self.urls = mapping['urls']
+            
 
     def get_bert_embedding(self, text):
         """Generate a BERT embedding (768-dim) for a given text."""
@@ -43,7 +45,7 @@ class BERTIndexer:
 
         # Extract the first 50 words from the content
         words = content.split()
-        snippet = ' '.join(words[:50])  # Get the first 50 words
+        snippet = ' '.join(words[:30])  # Get the first 50 words
         return snippet + ('...' if len(words) > 50 else '')
 
     def get_doc_path(self, doc_id):
@@ -65,21 +67,33 @@ class BERTIndexer:
 
         results = []
         for i in range(top_k):
-            doc_id = self.doc_ids[indices[0][i]]
-            url = self.urls[indices[0][i]]
-            quality_score = self.quality_scores.get(doc_id, 0)
-            snippet = self.get_snippet(doc_id)
-            distance = distances[0][i]
-            results.append({
-                'doc_id': doc_id,
-                'url': url,
-                'snippet': snippet,
-                'quality_score': quality_score,
-                'distance': distance
-            })
+            try:
+
+                # Ensure the index is being used correctly
+                if isinstance(self.doc_ids, list):
+                    # Access directly if doc_ids is a list
+                    doc_id = self.doc_ids[indices[0][i]]
+                    url = self.urls[indices[0][i]]  # Similarly, use indices directly for urls
+                else:
+                    # Use str() for dictionary keys if doc_ids is a dictionary
+                    doc_id = self.doc_ids[str(indices[0][i])]
+                    url = self.urls[str(indices[0][i])]
+
+                quality_score = self.quality_scores.get(doc_id, 0)
+                snippet = self.get_snippet(doc_id)
+                distance = distances[0][i]
+                results.append({
+                    'doc_id': doc_id,
+                    'url': url,
+                    'snippet': snippet,
+                    'quality_score': quality_score,
+                    'distance': distance
+                })
+            except Exception as e:
+                print(f"Error processing index {i}: {e}")
+                continue
         
         return results
-
 
 def main():
     """Interactive loop for querying the FAISS index."""
@@ -107,6 +121,35 @@ def main():
             print(f"   Distance: {result['distance']:.4f}, Quality Score: {result['quality_score']:.2f}")
             print(f"   Snippet: ... {result['snippet']} ...")
             print("-" * 50)
+
+# def main():
+#     # Set up the Streamlit app interface
+#     st.title("🦸 Superhero Search 🦹")
+
+#     # Subtitle
+#     st.subheader("🔍 Find details about your favorite Marvel and DC superheroes! 💥")
+    
+#     # Get user input for the query
+#     query = st.text_input("Enter your query", "", placeholder="Search any of your favourite Marvel or DC characters...")
+
+#     if query:
+        
+#         # Initialize the indexer and query the index
+#         indexer = BERTIndexer(index_file='bert_fandom_index.faiss', mapping_file='doc_id_mapping.json', data_dir='../scraper/data')
+        
+#         with st.spinner(f"Searching for **{query}**... Please wait."):
+#             results = indexer.query_index(query, top_k=4)
+
+#         st.write(f"Searching for: **{query}**...")
+#         # Display the results in a clean format
+#         st.subheader("Search Results:")
+#         for rank, result in enumerate(results, 1):
+#             st.write(f"**Rank {rank}:**")
+#             st.write(f"{result['url']}")
+#             st.write(f"[Doc ID: {result['doc_id']}]")
+#             st.write(f"   Distance: {result['distance']:.4f}, Quality Score: {result['quality_score']:.2f}")
+#             st.write(f"   Snippet: ... {result['snippet']} ...")
+#             st.markdown("-" * 50)
 
 if __name__ == "__main__":
     main()
