@@ -33,4 +33,13 @@ Code Instruction search.sh
 
 "Usage: <search_query>"
 
-`sh ./search.sh "Natasha Romonaff"`
+`sh ./search.sh "Natasha Romanaff"`
+
+# Basic GUI - Basic GUI using Streamlit can be hosted locally or on a server
+- Easy to use and see results
+
+# To use the GUI 
+- Run the code on the correct port.
+- Select the indexing method to be used for the search.
+- Press the Search button.
+- The search results will be displayed on the screen, along with retrieval time and ranking.
