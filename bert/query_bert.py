@@ -98,9 +98,9 @@ class BERTIndexer:
 def main():
     """Interactive loop for querying the FAISS index."""
     parser = argparse.ArgumentParser()
-    parser.add_argument('--index_file', type=str, required=True, help='Path to the FAISS index file')
-    parser.add_argument('--mapping_file', type=str, required=True, help='Path to the doc ID mapping file')
-    parser.add_argument('--data_dir', type=str, default='../scraper/data', help='Directory where scraped data is stored')
+    parser.add_argument('--index_file', type=str, default='bert_fandom_index.faiss', help='Path to the FAISS index file')
+    parser.add_argument('--mapping_file', type=str, default='doc_id_mapping.json', help='Path to the doc ID mapping file')
+    parser.add_argument('--data_dir', type=str, required=True, help='Directory where scraped data files is stored')
     
     args = parser.parse_args()
 
@@ -122,34 +122,6 @@ def main():
             print(f"   Snippet: ... {result['snippet']} ...")
             print("-" * 50)
 
-# def main():
-#     # Set up the Streamlit app interface
-#     st.title("🦸 Superhero Search 🦹")
-
-#     # Subtitle
-#     st.subheader("🔍 Find details about your favorite Marvel and DC superheroes! 💥")
-    
-#     # Get user input for the query
-#     query = st.text_input("Enter your query", "", placeholder="Search any of your favourite Marvel or DC characters...")
-
-#     if query:
-        
-#         # Initialize the indexer and query the index
-#         indexer = BERTIndexer(index_file='bert_fandom_index.faiss', mapping_file='doc_id_mapping.json', data_dir='../scraper/data')
-        
-#         with st.spinner(f"Searching for **{query}**... Please wait."):
-#             results = indexer.query_index(query, top_k=4)
-
-#         st.write(f"Searching for: **{query}**...")
-#         # Display the results in a clean format
-#         st.subheader("Search Results:")
-#         for rank, result in enumerate(results, 1):
-#             st.write(f"**Rank {rank}:**")
-#             st.write(f"{result['url']}")
-#             st.write(f"[Doc ID: {result['doc_id']}]")
-#             st.write(f"   Distance: {result['distance']:.4f}, Quality Score: {result['quality_score']:.2f}")
-#             st.write(f"   Snippet: ... {result['snippet']} ...")
-#             st.markdown("-" * 50)
 
 if __name__ == "__main__":
     main()
