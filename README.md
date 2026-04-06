@@ -1,5 +1,13 @@
 # [CS 242] Fandom Wiki Search Engine
 **Fandom Wiki Search Engine** is our final project for **CS242: Information Retrieval and Web Search**, designed to enhance search capabilities across various Fandom wikis. This specialized search engine indexes and retrieves relevant content from multiple fan-driven knowledge bases, allowing users to efficiently find information on characters, lore, game mechanics, and more. By implementing advanced search techniques such as ranking algorithms, keyword-based retrieval, and possibly NLP-driven enhancements, our goal is to provide accurate and fast search results tailored to the needs of fandom communities.
+
+## Tech Stack
+- **Scraping:** BeautifulSoup, Scrapy
+- **Indexing:** Apache Lucene, FAISS
+- **Search:** Keyword-based (Lucene), Semantic (BERT + FAISS)
+- **GUI:** Streamlit
+- **Language:** Python
+
 # Instructions to run the code
 
 # To run the Lucene Indexer after all data is scraped
